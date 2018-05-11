@@ -1,4 +1,5 @@
 import parsedatetime
+import sys
 import auroraapi as aurora
 from datetime import datetime, timedelta
 from auroraapi.speech import listen_and_transcribe
@@ -21,8 +22,15 @@ if __name__ == '__main__':
 
     interpretedText = text.interpret()
     date = None
+
+    if interpretedText.intent != 'set_reminder':
+        print('Incorrect use case')
+        sys.exit(1)
+
     if 'duration' in interpretedText.entities:
         date = convert_to_date(interpretedText.entities['duration'])
+    elif 'day' in interpretedText.entities and 'time' in interpretedText.entities:
+        date = convert_to_date(interpretedText.entities['day'] + ' at ' + interpretedText.entities['time'])
     elif 'day' in interpretedText.entities:
         date = convert_to_date(interpretedText.entities['day'])
     elif 'time' in interpretedText.entities:
