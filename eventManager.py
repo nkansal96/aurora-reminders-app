@@ -1,14 +1,10 @@
-"""
-Shows basic usage of the Google Calendar API. Creates a Google Calendar API
-service object and outputs a list of the next 10 events on the user's calendar.
-"""
 from __future__ import print_function
 from apiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
 import datetime
 
-class Reminder:
+class EventManager:
     def __init__(self):
         # Setup the Calendar API
         SCOPES = 'https://www.googleapis.com/auth/calendar'
@@ -24,13 +20,9 @@ class Reminder:
     # May 28, 2018 at 9:00 am UTC-7 hours
     def addEvent(self, eventName, eventStart, eventEnd):
         # Call the Calendar API
-        now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
         event = {}
         event['summary'] = eventName
         event['start'] = {'dateTime': eventStart}
         event['end'] = {'dateTime': eventEnd}
         event = self.service.events().insert(calendarId='primary', sendNotifications=True, body=event).execute()
         print('Event created: %s' % (event.get('htmlLink')))
-
-reminder = Reminder()
-reminder.addEvent('Test event', '2018-05-28T09:00:00-07:00', '2018-05-28T17:00:00-07:00')
