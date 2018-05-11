@@ -18,6 +18,9 @@ if __name__ == '__main__':
 
     print('PortAudio starting up...')
     text = listen_and_transcribe(silence_len=0.5)
+    while(text.text == ''):
+        print("You haven't said anything...")
+        text = listen_and_transcribe(silence_len=0.5)
     print('You said: {}'.format(text.text))
 
     interpretedText = text.interpret()
