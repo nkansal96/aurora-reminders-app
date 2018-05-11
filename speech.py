@@ -3,13 +3,12 @@ import auroraapi as aurora
 from datetime import datetime, timedelta
 from auroraapi.speech import listen_and_transcribe
 from auroraKeys import APP_ID, APP_TOKEN
+from eventManager import EventManager
 
-def convert_to_utctime(dateString):
+def convert_to_date(dateString):
     pdt_cal = parsedatetime.Calendar()
     time_struct, parse_status = pdt_cal.parse(dateString)
-    utc_delta = datetime.utcnow()-datetime.now()
-    utc_time = datetime(*time_struct[:6]) + utc_delta
-    return utc_time
+    return datetime(*time_struct[:6])
 
 if __name__ == '__main__':
     # Set your application settings
@@ -21,5 +20,14 @@ if __name__ == '__main__':
     print('You said: {}'.format(text.text))
 
     interpretedText = text.interpret()
-    date = convert_to_utctime(interpretedText.entities['duration'])
+    date = None
+    if 'duration' in interpretedText.entities:
+        date = convert_to_date(interpretedText.entities['duration'])
+    elif 'day' in interpretedText.entities:
+        date = convert_to_date(interpretedText.entities['day'])
+    elif 'time' in interpretedText.entities:
+        date = convert_to_date(interpretedText.entities['time'])
     task = interpretedText.entities['task']
+
+    eventMgr = EventManager()
+    eventMgr.addEvent(task, date, date, 'UTC-07:00')

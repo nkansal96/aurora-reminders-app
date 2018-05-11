@@ -15,14 +15,16 @@ class EventManager:
             creds = tools.run_flow(flow, store)
         self.service = build('calendar', 'v3', http=creds.authorize(Http()))
 
-    # eventStart and eventEnd are strings representing a date of the following format: YYYY-MM-DDTHH:MM:SS-HH:MM
-    # For example, the following date '2018-05-28T09:00:00-07:00' interprets as
-    # May 28, 2018 at 9:00 am UTC-7 hours
-    def addEvent(self, eventName, eventStart, eventEnd):
+    # eventStart and eventEnd are datetime objects to be converted into the following format: YYYY-MM-DDTHH:mm:SS
+    def addEvent(self, eventName, eventStart, eventEnd, timeZone):
+        eventStart = eventStart.strftime('%Y-%m-%dT%H:%M:%S')
+        eventEnd = eventEnd.strftime('%Y-%m-%dT%H:%M:%S')
+
         # Call the Calendar API
         event = {}
         event['summary'] = eventName
-        event['start'] = {'dateTime': eventStart}
-        event['end'] = {'dateTime': eventEnd}
+        event['start'] = {'dateTime': eventStart, 'timeZone': timeZone}
+        event['end'] = {'dateTime': eventEnd, 'timeZone': timeZone}
         event = self.service.events().insert(calendarId='primary', sendNotifications=True, body=event).execute()
         print('Event created: %s' % (event.get('htmlLink')))
+        
