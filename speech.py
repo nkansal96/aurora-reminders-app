@@ -19,17 +19,34 @@ from functools import partial
 from eventManager import EventManager
 from auroraKeys import APP_ID, APP_TOKEN
 
-THEME_COLOR = [0.12, 0.69, 0.99, 1]
-WHITE_COLOR = [1, 1, 1, 1]
-BLACK_COLOR = [0, 0, 0, 1]
+def hex_to_rgb(hex, alpha=1):
+    h = hex.lstrip('#')
+    return list(round(int(h[i:i+2], 16)/255.0, 2) for i in (0, 2, 4)) + [alpha]
+
+THEME_COLOR = "#CF6766"
+# THEME_COLOR = "#198cc6"
+WHITE = "#FAFAFF"
+BLACK = "#000000"
+GRAY = "#161719"
+# TURQUOISE = "#36F1CD"
+BLUE = "#80DCD4"
+
+BUTTON_COLOR = hex_to_rgb(THEME_COLOR)
+BOT_TEXT_COLOR = BLUE
+TEXT_COLOR = hex_to_rgb(WHITE)
+BACKGROUND_COLOR = hex_to_rgb(GRAY)
+
 WINDOW_WIDTH = 450
 WINDOW_HEIGHT = 600
 
 listen_msg = "Listening..."
+indicator =  ". . ."
+
 confirmations = ['OK. ', 'Sure. ', 'Alright. ', '']
 greetings1 = ["Hello, ", "Hi, ", "Hey, "]
-greetings2 = ["how can I help?", "what can I do for you?", "how's it going?"]
-apologies = ["I'm sorry, I don't understand.", "I didn't understand that.", "Sorry, I'm not sure about that."]
+greetings2 = ["how can I help?", "what can I do for you?", "what's up?"]
+apologies = ["I'm sorry, I don't understand.", "I don't understand that.", "Sorry, I'm not sure about that."]
+repeat_requests = ["I couldn't hear what you said.", "Sorry, I didn't understand that.", "I'm not sure what you just said.", "Sorry, I didn't hear anything."]
 cancel_intents = ['cancel', 'never mind', 'forget it', 'quit', 'restart', 'start over']
 
 def get_random_confirmation():
@@ -41,20 +58,32 @@ def get_random_greeting():
 def get_random_apology():
     return apologies[randint(0, len(apologies) - 1)]
 
+def get_random_rep_request():
+    return repeat_requests[randint(0, len(repeat_requests) - 1)]
+
+def color_text(text):
+    return bold_text("[color={}]".format(BOT_TEXT_COLOR) + text + "[/color]")
+
+def bold_text(text):
+    return "[b]" + text + "[/b]"
+
 event_mgr = EventManager()
 
 Builder.load_string('''
 <ScrollableLabel>:
     Label:
+        padding: 10, 10
         size_hint_y: None
         height: self.texture_size[1]
         text_size: self.width, None
         text: root.text
-''')
+        color: {}
+        markup: True
+'''.format(TEXT_COLOR))
 
 
 class ScrollableLabel(ScrollView):
-    text = StringProperty("Hello. Ask me to set a reminder.\n")
+    text = StringProperty(color_text("Hello. Ask me to set a reminder.\n\n"))
 
 
 class ChatApp(App):
@@ -73,11 +102,12 @@ class ChatApp(App):
 
         button = Button(text='Record',
                         size_hint_x=0.2,
-                        background_color=THEME_COLOR,
-                        color=WHITE_COLOR)
+                        background_normal='',
+                        background_color=BUTTON_COLOR,
+                        color=TEXT_COLOR)
 
         # Interpret user input to retrieve entities for reminder creation
-        def interpret_user_response(text):
+        def interpret_user_response(text, *largs):
             interpret = text.interpret()
 
             if interpret.intent == 'set_reminder':
@@ -92,7 +122,7 @@ class ChatApp(App):
 
         def create_event(interpret):
             if event_mgr.convert_text_to_event(interpret):
-                update_chat("Creating your reminder: \"{}\".".format(interpret.entities['task'].capitalize()), confirm=True)
+                update_chat("Creating your reminder, \"{}\".".format(interpret.entities['task'].capitalize()), confirm=True)
             else:
                 update_chat(get_random_apology())
 
@@ -100,14 +130,19 @@ class ChatApp(App):
             Text(text).speech().audio.play()
 
         def listen_callback(*largs):
-            msg = listen_and_transcribe()
-            hide_listen_animation()
+            try:
+                msg = listen_and_transcribe()
+                hide_listen_animation()
 
-            if msg.text != '':
-                update_chat(msg.text, is_user=True)
-                interpret_user_response(msg)
-            else:
-                update_chat(get_random_apology())
+                if msg.text != '':
+                    update_chat(msg.text, is_user=True)
+                    Clock.schedule_once(partial(interpret_user_response, msg), 0.1)
+                else:
+                    Clock.schedule_once(partial(update_chat, get_random_rep_request(), False, False), 0.1)
+            except Exception as e:
+                # listen_and_transcribe throws (broken pipe) if silent
+                hide_listen_animation()
+                Clock.schedule_once(partial(update_chat, get_random_rep_request(), False, False), 0.1)
 
         def record_user_response():
             show_listen_animation()
@@ -115,22 +150,24 @@ class ChatApp(App):
 
         def show_listen_animation():
             button.text = listen_msg
+            chat_view.text += indicator
 
         def hide_listen_animation():
             button.text = "Record"
+            chat_view.text = chat_view.text[:-len(indicator)]
 
-        def update_chat(text, is_user=False, confirm=False):
+        def update_chat(text, is_user=False, confirm=False, *largs):
             if is_user:
-                chat_view.text += '> ' + text + '\n'
+                chat_view.text += text + '\n\n'
             else:
                 response = ""
                 if confirm:
                     response += get_random_confirmation()
                 response += text
 
-                Clock.schedule_once(partial(play_text_callback, response), 0)
+                Clock.schedule_once(partial(play_text_callback, response), 0.1)
 
-                chat_view.text += response + '\n'
+                chat_view.text += color_text(response + '\n\n')
 
         button.bind(on_press=lambda x: record_user_response())
 
@@ -147,6 +184,7 @@ if __name__ == "__main__":
     aurora.config.app_id    = APP_ID     # put your app ID here
     aurora.config.app_token = APP_TOKEN  # put your app token here
 
+    Window.clearcolor = BACKGROUND_COLOR
     Window.size = (WINDOW_WIDTH, WINDOW_HEIGHT)
 
     ChatApp().run()
