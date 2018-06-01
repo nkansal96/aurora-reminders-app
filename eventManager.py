@@ -3,6 +3,7 @@ from apiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
 from datetime import datetime, timedelta
+from tzlocal import get_localzone
 import parsedatetime
 
 class EventManager:
@@ -47,8 +48,10 @@ class EventManager:
             date = self.convert_to_date(text.entities['day'])
         elif 'time' in text.entities:
             date = self.convert_to_date(text.entities['time'])
+        else:
+            return False
 
         task = text.entities['task']
 
-        # TODO: get timezone using tzlocal
-        self.addEvent(task, date, date, 'UTC-07:00')
+        self.addEvent(task, date, date, str(get_localzone()))
+        return True

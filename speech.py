@@ -13,7 +13,6 @@ from auroraapi.speech import listen_and_transcribe
 from auroraapi.text import Text
 
 import sys
-import threading
 from random import randint
 from functools import partial
 from eventManager import EventManager
@@ -24,7 +23,7 @@ white_color = [1, 1, 1, 1]
 black_color = [0, 0, 0, 1]
 listen_msg = "Listening..."
 confirmations = ['OK. ', 'Got it. ', 'Sure. ', 'Alright. ', '']
-apologies = ["I'm sorry, I don't understand.", "I didn't understand that."]
+apologies = ["I'm sorry, I don't understand.", "I didn't understand that.", "I can't help you with that", "Sorry, I'm not sure about that."]
 cancel_intents = ['cancel', 'never mind', 'forget it', 'quit', 'restart', 'start over']
 
 def get_random_confirmation():
@@ -80,8 +79,10 @@ class ChatApp(App):
                 return True
 
         def create_event(interpret):
-            update_chat("Creating your reminder: \"{}\".".format(interpret.entities['task'].capitalize()), confirm=True)
-            event_mgr.convert_text_to_event(interpret)
+            if event_mgr.convert_text_to_event(interpret):
+                update_chat("Creating your reminder: \"{}\".".format(interpret.entities['task'].capitalize()), confirm=True)
+            else:
+                update_chat(get_random_apology())
 
         def play_text_callback(text, *largs):
             Text(text).speech().audio.play()
