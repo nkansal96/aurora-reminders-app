@@ -86,9 +86,6 @@ class ChatApp(App):
                 update_chat(msg.text, is_user=True)
                 interpret_user_response(msg)
 
-        def play_audio_response(text, *largs):
-            msg = Text(text).speech().audio.play()
-
         def record_user_response():
             show_listen_animation()
             Clock.schedule_once(listen_callback, 0)
@@ -107,8 +104,6 @@ class ChatApp(App):
                 if confirm:
                     response += get_random_confirmation()
                 response += text + '\n'
-
-                Clock.schedule_once(listen_callback, 0)
 
                 chat_view.text += response
 
