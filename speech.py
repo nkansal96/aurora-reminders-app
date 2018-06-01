@@ -1,6 +1,7 @@
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.config import Config
+from kivy.core.window import Window
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.button import Button
 from kivy.uix.textinput import TextInput
@@ -18,16 +19,24 @@ from functools import partial
 from eventManager import EventManager
 from auroraKeys import APP_ID, APP_TOKEN
 
-theme_color = [0.31, 0.89, 0.76, 1]
-white_color = [1, 1, 1, 1]
-black_color = [0, 0, 0, 1]
+THEME_COLOR = [0.12, 0.69, 0.99, 1]
+WHITE_COLOR = [1, 1, 1, 1]
+BLACK_COLOR = [0, 0, 0, 1]
+WINDOW_WIDTH = 450
+WINDOW_HEIGHT = 600
+
 listen_msg = "Listening..."
-confirmations = ['OK. ', 'Got it. ', 'Sure. ', 'Alright. ', '']
-apologies = ["I'm sorry, I don't understand.", "I didn't understand that.", "I can't help you with that", "Sorry, I'm not sure about that."]
+confirmations = ['OK. ', 'Sure. ', 'Alright. ', '']
+greetings1 = ["Hello, ", "Hi, ", "Hey, "]
+greetings2 = ["how can I help?", "what can I do for you?", "how's it going?"]
+apologies = ["I'm sorry, I don't understand.", "I didn't understand that.", "Sorry, I'm not sure about that."]
 cancel_intents = ['cancel', 'never mind', 'forget it', 'quit', 'restart', 'start over']
 
 def get_random_confirmation():
     return confirmations[randint(0, len(confirmations) - 1)]
+
+def get_random_greeting():
+    return greetings1[randint(0, len(greetings1) - 1)] + greetings2[randint(0, len(greetings2) - 1)]
 
 def get_random_apology():
     return apologies[randint(0, len(apologies) - 1)]
@@ -64,19 +73,22 @@ class ChatApp(App):
 
         button = Button(text='Record',
                         size_hint_x=0.2,
-                        background_color=theme_color,
-                        color=white_color)
+                        background_color=THEME_COLOR,
+                        color=WHITE_COLOR)
 
         # Interpret user input to retrieve entities for reminder creation
         def interpret_user_response(text):
             interpret = text.interpret()
 
-            if interpret.intent != 'set_reminder':
-                update_chat(get_random_apology())
-                return False
-            else:
+            if interpret.intent == 'set_reminder':
                 create_event(interpret)
                 return True
+            elif interpret.intent == 'greeting':
+                update_chat(get_random_greeting())
+                return False
+            else:
+                update_chat(get_random_apology())
+                return False
 
         def create_event(interpret):
             if event_mgr.convert_text_to_event(interpret):
@@ -88,7 +100,7 @@ class ChatApp(App):
             Text(text).speech().audio.play()
 
         def listen_callback(*largs):
-            msg = listen_and_transcribe(silence_len=0.5)
+            msg = listen_and_transcribe()
             hide_listen_animation()
 
             if msg.text != '':
@@ -135,8 +147,6 @@ if __name__ == "__main__":
     aurora.config.app_id    = APP_ID     # put your app ID here
     aurora.config.app_token = APP_TOKEN  # put your app token here
 
-    Config.set('graphics', 'width', '500')
-    Config.set('graphics', 'height', '600')
-    Config.write()
+    Window.size = (WINDOW_WIDTH, WINDOW_HEIGHT)
 
     ChatApp().run()
