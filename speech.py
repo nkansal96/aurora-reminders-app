@@ -23,17 +23,18 @@ def hex_to_rgb(hex, alpha=1):
     h = hex.lstrip('#')
     return list(round(int(h[i:i+2], 16)/255.0, 2) for i in (0, 2, 4)) + [alpha]
 
-THEME_COLOR = "#CF6766"
-# THEME_COLOR = "#198cc6"
-WHITE = "#FAFAFF"
-BLACK = "#000000"
-GRAY = "#161719"
-# TURQUOISE = "#36F1CD"
+# THEME_COLOR = "#CF6766"
+THEME_COLOR = "#1EB1FC"
+# THEME_COLOR = "#4FC3B5"
+WHITE = "#FFFFFF"
+# BLACK = "#000000"
+BLACK = "#202121"
+GRAY = "#F6F7F9"
 BLUE = "#80DCD4"
 
 BUTTON_COLOR = hex_to_rgb(THEME_COLOR)
-BOT_TEXT_COLOR = BLUE
-TEXT_COLOR = hex_to_rgb(WHITE)
+BOT_TEXT_COLOR = BLACK
+TEXT_COLOR = hex_to_rgb(BLACK)
 BACKGROUND_COLOR = hex_to_rgb(GRAY)
 
 WINDOW_WIDTH = 450
@@ -44,7 +45,7 @@ indicator =  ". . ."
 
 confirmations = ['OK. ', 'Sure. ', 'Alright. ', '']
 greetings1 = ["Hello, ", "Hi, ", "Hey, "]
-greetings2 = ["how can I help?", "what can I do for you?", "what's up?"]
+greetings2 = ["how can I help?", "what can I do for you?", "what can I remind you about?"]
 apologies = ["I'm sorry, I don't understand.", "I don't understand that.", "Sorry, I'm not sure about that."]
 repeat_requests = ["I couldn't hear what you said.", "Sorry, I didn't understand that.", "I'm not sure what you just said.", "Sorry, I didn't hear anything."]
 cancel_intents = ['cancel', 'never mind', 'forget it', 'quit', 'restart', 'start over']
@@ -71,8 +72,10 @@ event_mgr = EventManager()
 
 Builder.load_string('''
 <ScrollableLabel>:
+    effect_cls: 'DampedScrollEffect'
+    scroll_y: 0
     Label:
-        padding: 10, 10
+        padding: 15, 15
         size_hint_y: None
         height: self.texture_size[1]
         text_size: self.width, None
@@ -83,7 +86,7 @@ Builder.load_string('''
 
 
 class ScrollableLabel(ScrollView):
-    text = StringProperty(color_text("Hello. Ask me to set a reminder.\n\n"))
+    text = StringProperty(color_text("Hello. Ask me to create a reminder.\n\n"))
 
 
 class ChatApp(App):
@@ -104,7 +107,7 @@ class ChatApp(App):
                         size_hint_x=0.2,
                         background_normal='',
                         background_color=BUTTON_COLOR,
-                        color=TEXT_COLOR)
+                        color=hex_to_rgb(WHITE))
 
         # Interpret user input to retrieve entities for reminder creation
         def interpret_user_response(text, *largs):
