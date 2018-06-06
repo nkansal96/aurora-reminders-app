@@ -89,9 +89,10 @@ class ScrollableLabel(ScrollView):
     text = StringProperty(color_text("Hello. Ask me to create a reminder.\n\n"))
 
 
-class ChatApp(App):
+class RemindersApp(App):
 
     def build(self):
+        self.title = "Aurora Reminders"
 
         main_box_layout = BoxLayout(orientation='vertical',
                                     padding=20,
@@ -115,13 +116,14 @@ class ChatApp(App):
 
             if interpret.intent == 'set_reminder':
                 create_event(interpret)
-                return True
             elif interpret.intent == 'greeting':
                 update_chat(get_random_greeting())
-                return False
+            elif text.text.lower() in cancel_intents:
+                update_chat("Alright then.")
             else:
                 update_chat(get_random_apology())
-                return False
+
+            return True
 
         def create_event(interpret):
             if event_mgr.convert_text_to_event(interpret):
@@ -147,7 +149,8 @@ class ChatApp(App):
                 hide_listen_animation()
                 Clock.schedule_once(partial(update_chat, get_random_rep_request(), False, False), 0.1)
 
-        def record_user_response():
+        def record_user_response(instance):
+            # print("Recording audio")
             show_listen_animation()
             Clock.schedule_once(listen_callback, 0)
 
@@ -172,7 +175,7 @@ class ChatApp(App):
 
                 chat_view.text += color_text(response + '\n\n')
 
-        button.bind(on_press=lambda x: record_user_response())
+        button.bind(on_press=record_user_response)
 
         main_box_layout.add_widget(chat_view)
         main_box_layout.add_widget(in_box_layout)
@@ -190,4 +193,4 @@ if __name__ == "__main__":
     Window.clearcolor = BACKGROUND_COLOR
     Window.size = (WINDOW_WIDTH, WINDOW_HEIGHT)
 
-    ChatApp().run()
+    RemindersApp().run()
