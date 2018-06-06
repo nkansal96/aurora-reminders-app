@@ -25,7 +25,7 @@ class EventManager:
 
         # Call the Calendar API
         event = {}
-        event['summary'] = eventName
+        event['summary'] = eventName.capitalize()
         event['start'] = {'dateTime': eventStart, 'timeZone': timeZone}
         event['end'] = {'dateTime': eventEnd, 'timeZone': timeZone}
         event = self.service.events().insert(calendarId='primary', sendNotifications=True, body=event).execute()
